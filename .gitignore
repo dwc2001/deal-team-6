@@ -1,0 +1,15 @@
+node_modules
+dist
+.env
+.env.*
+!.env.example
+
+# Real contact data never goes in the repo
+*.xlsx
+*.local.*
+data/
+supabase/.temp
+supabase/.branches
+
+.DS_Store
+Thumbs.db
