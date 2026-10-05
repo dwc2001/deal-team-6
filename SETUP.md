@@ -30,6 +30,8 @@ Now anyone with the link and the passcode can sign in. To change the passcode la
 
 Scanning works right away; nothing needs redeploying.
 
+If scanning says the key "isn't tied to a workspace", the key was made at the organization level. Either add a second secret `ANTHROPIC_WORKSPACE_ID` with your workspace ID (starts with `wrkspc_`, found under **Settings > Workspaces** in the Anthropic Console), or create a new key from inside a workspace and replace `ANTHROPIC_API_KEY` with it.
+
 ## For later
 
 - **Redeploy the scanner** after changing it: `npx supabase functions deploy scan-card --project-ref nkqbwfcoqmthgsyfvqtc --use-api`

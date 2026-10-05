@@ -3,6 +3,8 @@
 //   ANTHROPIC_API_KEY  required
 //   TEAM_EMAIL         the shared team login, if not team@dealteam6.app
 //   CARD_SCAN_MODEL    optional, e.g. claude-sonnet-5-5 to spend less per card
+//   ANTHROPIC_WORKSPACE_ID  needed only if the API key is not tied to a workspace
+//                           (an organization-level key); looks like wrkspc_...
 
 import Anthropic from "@anthropic-ai/sdk";
 import { createClient } from "@supabase/supabase-js";
@@ -58,7 +60,11 @@ Deno.serve(async (req) => {
     return reply({ error: "Photo missing or too large." }, 400);
   }
 
-  const client = new Anthropic({ apiKey });
+  const workspace = Deno.env.get("ANTHROPIC_WORKSPACE_ID")?.trim();
+  const client = new Anthropic({
+    apiKey,
+    defaultHeaders: workspace ? { "anthropic-workspace-id": workspace } : undefined,
+  });
   try {
     const result = await extractCards(client, {
       image: body.image,
@@ -75,6 +81,9 @@ Deno.serve(async (req) => {
     if (err instanceof Anthropic.APIError) {
       const detail = String((err.error as { error?: { message?: string } } | undefined)?.error?.message ?? err.message);
       console.error("Anthropic API error", err.status, detail);
+      if (/anthropic-workspace-id|scoped to a workspace/i.test(detail)) {
+        return reply({ error: "The Anthropic API key isn't tied to a workspace. Add the workspace ID (wrkspc_...) as the ANTHROPIC_WORKSPACE_ID secret in Supabase, or use a key created inside a workspace." }, 502);
+      }
       if (/credit balance|billing|purchase credits/i.test(detail)) {
         return reply({ error: "The Anthropic account is out of credit. Add credit at console.anthropic.com under Billing, then try again." }, 402);
       }

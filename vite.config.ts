@@ -34,7 +34,10 @@ function devScanApi(env: Record<string, string>): Plugin {
           const body = (await readJson(req)) as never;
           const { default: Anthropic } = await import("@anthropic-ai/sdk");
           const { extractCards } = await server.ssrLoadModule("/supabase/functions/scan-card/extract.ts");
-          const client = new Anthropic(env.ANTHROPIC_API_KEY ? { apiKey: env.ANTHROPIC_API_KEY } : {});
+          const client = new Anthropic({
+            ...(env.ANTHROPIC_API_KEY ? { apiKey: env.ANTHROPIC_API_KEY } : {}),
+            ...(env.ANTHROPIC_WORKSPACE_ID ? { defaultHeaders: { "anthropic-workspace-id": env.ANTHROPIC_WORKSPACE_ID } } : {}),
+          });
           send(res, 200, await extractCards(client, body, { model: env.CARD_SCAN_MODEL }));
         } catch (err) {
           const message = err instanceof Error ? err.message : String(err);
