@@ -1,10 +1,11 @@
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { Link, NavLink, Route, Routes, useLocation, useNavigate } from "react-router-dom";
 import { Emblem, Wordmark } from "./components/Emblem";
 import {
   CalcIcon, CameraIcon, CompsIcon, LinkIcon, MoonIcon, PeopleIcon, PlusIcon, SunIcon,
 } from "./components/icons";
 import { Popover, Toasts } from "./components/ui";
+import { ThemeButton } from "./components/ThemeButton";
 import { ContactEditor } from "./pages/ContactEditor";
 import { CompEditor } from "./pages/CompEditor";
 import { LinkEditor } from "./pages/LinkEditor";
@@ -17,28 +18,7 @@ import { SignIn } from "./pages/SignIn";
 import { initials } from "./lib/format";
 import { resetDemoData } from "./lib/backend";
 import { useStore } from "./lib/store";
-
-type Theme = "system" | "light" | "dark";
-
-function readTheme(): Theme {
-  try {
-    const t = localStorage.getItem("dt6-theme");
-    return t === "light" || t === "dark" ? t : "system";
-  } catch {
-    return "system";
-  }
-}
-
-function applyTheme(t: Theme) {
-  if (t === "system") delete document.documentElement.dataset.theme;
-  else document.documentElement.dataset.theme = t;
-  try {
-    if (t === "system") localStorage.removeItem("dt6-theme");
-    else localStorage.setItem("dt6-theme", t);
-  } catch {
-    /* ignore */
-  }
-}
+import { useTheme } from "./lib/theme";
 
 export function App() {
   const { status, error, reload } = useStore();
@@ -125,6 +105,7 @@ function TopBar() {
         <NavLink to="/resources">Resources</NavLink>
       </nav>
       <div className="topbar-right">
+        <ThemeButton />
         <Popover
           button={(p) => (
             <button className="btn btn-ghost" {...p} aria-label="Add">
@@ -152,11 +133,7 @@ function TopBar() {
 
 function MeMenu() {
   const { me, setMe, signOut, mode, reload } = useStore();
-  const [theme, setTheme] = useState<Theme>(readTheme);
-  const pick = (t: Theme) => {
-    setTheme(t);
-    applyTheme(t);
-  };
+  const { theme, setTheme: pick } = useTheme();
   return (
     <Popover
       button={(p) => (
@@ -179,10 +156,11 @@ function MeMenu() {
             Change my name
           </button>
           <hr />
-          <div className="seg" style={{ margin: "4px 6px 6px" }} role="group" aria-label="Theme">
+          <p className="menu-note">Appearance</p>
+          <div className="seg" style={{ margin: "0 6px 6px" }} role="group" aria-label="Appearance">
+            <button className={theme === "light" ? "on" : ""} onClick={() => pick("light")}><SunIcon size={16} /> Light</button>
+            <button className={theme === "dark" ? "on" : ""} onClick={() => pick("dark")}><MoonIcon size={16} /> Dark</button>
             <button className={theme === "system" ? "on" : ""} onClick={() => pick("system")}>Auto</button>
-            <button className={theme === "light" ? "on" : ""} onClick={() => pick("light")} aria-label="Light"><SunIcon size={16} /></button>
-            <button className={theme === "dark" ? "on" : ""} onClick={() => pick("dark")} aria-label="Dark"><MoonIcon size={16} /></button>
           </div>
           <hr />
           {mode === "demo" && (

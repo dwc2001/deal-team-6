@@ -73,8 +73,14 @@ Deno.serve(async (req) => {
       return reply({ error: "The scanner's Anthropic API key is not valid." }, 502);
     }
     if (err instanceof Anthropic.APIError) {
-      return reply({ error: `Claude returned an error (${err.status ?? "network"}). Try again.` }, 502);
+      const detail = String((err.error as { error?: { message?: string } } | undefined)?.error?.message ?? err.message);
+      console.error("Anthropic API error", err.status, detail);
+      if (/credit balance|billing|purchase credits/i.test(detail)) {
+        return reply({ error: "The Anthropic account is out of credit. Add credit at console.anthropic.com under Billing, then try again." }, 402);
+      }
+      return reply({ error: `Claude could not read the card (${err.status ?? "network"}): ${detail.slice(0, 240)}` }, 502);
     }
+    console.error("Scan failed", err);
     return reply({ error: err instanceof Error ? err.message : "Scan failed." }, 500);
   }
 });

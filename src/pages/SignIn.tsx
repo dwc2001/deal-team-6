@@ -1,6 +1,7 @@
 import { useState, type FormEvent } from "react";
 import { Emblem } from "../components/Emblem";
 import { Field } from "../components/ui";
+import { ThemeButton } from "../components/ThemeButton";
 import { useStore } from "../lib/store";
 
 export function SignIn() {
@@ -26,6 +27,9 @@ export function SignIn() {
 
   return (
     <div className="gate">
+      <div className="gate-theme">
+        <ThemeButton />
+      </div>
       <div className="gate-card">
         <Emblem size={76} title="Deal Team 6" />
         <h1>Deal Team 6</h1>

@@ -128,10 +128,15 @@ export async function extractCards(
       fallbacks: "default",
     });
   } catch (err) {
+    // A 400 about one of the optional settings: try once more with the plain
+    // request. Account problems (credit, key, permissions) are not retried.
     const e = err as { status?: number; message?: string };
-    if (e.status !== 400 || !/fallback/i.test(e.message ?? "")) throw err;
-    // The fallback option is not available for this model or account: scan without it.
-    response = await client.beta.messages.create(request);
+    if (e.status !== 400 || /credit|billing|balance|api key|permission/i.test(e.message ?? "")) throw err;
+    console.error("Scan retrying without optional settings:", e.message);
+    response = await client.beta.messages.create({
+      ...request,
+      output_config: { format: request.output_config.format },
+    });
   }
 
   if (response.stop_reason === "refusal") {
