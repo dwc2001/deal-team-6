@@ -1,50 +1,38 @@
-# One-time setup
+# Setup
 
-About 20 minutes. You need three free accounts: GitHub (you have it), Supabase, and an Anthropic API account for the card scanner.
+## Already done
 
-## 1. Create the database (Supabase)
+- Supabase project **Deal Team 6** holds the database: tables, access rules, and the private bucket for card photos.
+- The spreadsheet is loaded: 61 people in 31 services, 56 lease comps, 10 links.
+- Sign-ups are turned off, so the team login is the only account that can exist.
+- The card scanner is deployed (`scan-card`). It refuses anyone not signed in as the team.
+- The website at https://dwc2001.github.io/deal-team-6/ is connected to the database.
 
-1. Go to [supabase.com](https://supabase.com), sign up, and create a new project.
-   - Name: `deal-team-6`
-   - Region: East US
-   - Save the database password somewhere safe (you won't need it day to day).
-2. In the project, open **SQL Editor**, paste all of `supabase/schema.sql`, and click **Run**.
-3. Load the spreadsheet: open a new query, paste all of `supabase/seed.local.sql`, and click **Run**.
-   - That file is on your computer only. If it's missing, run `python scripts/import_excel.py` first.
+## Left to do (you)
 
-## 2. Set the team passcode
+### 1. Set the team passcode (2 minutes)
 
-1. Open **Authentication > Sign In / Providers** and turn **off** "Allow new users to sign up". Only the team login should exist.
-2. Open **Authentication > Users > Add user > Create new user**.
-   - Email: `team@dealteam6.app` (it never receives mail; it's just the login's name)
-   - Password: the team passcode. Make it at least 10 characters.
-   - Check **Auto Confirm User**.
+1. Open https://supabase.com/dashboard/project/nkqbwfcoqmthgsyfvqtc/auth/users
+2. Click **Add user**, then **Create new user**.
+3. Email: `team@dealteam6.app` (it never receives mail; it's only the login's name).
+4. Password: the team passcode. At least 10 characters, something easy to say out loud.
+5. Check **Auto Confirm User**, then **Create user**.
 
-To change the passcode later (say someone leaves), edit this user's password. From then on, signing in takes the new passcode.
+Now anyone with the link and the passcode can sign in. To change the passcode later (say someone leaves), click that user and set a new password.
 
-## 3. Turn on the card scanner
+### 2. Turn on the card scanner (5 minutes)
 
-1. Create an API key at [console.anthropic.com](https://console.anthropic.com) under **API Keys**. Set a monthly spend limit under **Billing** (each card costs two to three cents).
-2. In Supabase, open **Edge Functions > Secrets** and add `ANTHROPIC_API_KEY` with that key.
-3. Deploy the scanner. In a terminal in this folder:
+1. Go to https://console.anthropic.com and sign in or create an account.
+2. Under **Billing**, add credit ($5 covers roughly 200 cards) and set a monthly limit.
+3. Under **API Keys**, click **Create Key** and copy it.
+4. Open https://supabase.com/dashboard/project/nkqbwfcoqmthgsyfvqtc/functions/secrets
+5. Add a secret named `ANTHROPIC_API_KEY` and paste the key as its value. Save.
 
-```bash
-npx supabase login
-```
+Scanning works right away; nothing needs redeploying.
 
-Then tell Claude it's done, or run these yourself (your project ref is in the Supabase URL, `https://<ref>.supabase.co`):
+## For later
 
-```bash
-npx supabase functions deploy scan-card --project-ref YOUR_PROJECT_REF --use-api
-```
-
-## 4. Connect the website
-
-1. In Supabase, open **Project Settings > API** and copy the **Project URL** and the **publishable (anon) key**. Both are safe to put in a website; the access rules in step 1 are what protect the data.
-2. In the GitHub repository, open **Settings > Secrets and variables > Actions > Variables** and add:
-   - `VITE_SUPABASE_URL` = the Project URL
-   - `VITE_SUPABASE_ANON_KEY` = the publishable key
-3. Open **Settings > Pages** and set **Source** to **GitHub Actions**.
-4. Open **Actions**, pick **Deploy site**, and click **Run workflow**. In a minute the site is live at the address shown on the Pages screen.
-
-Send the team the link and the passcode. That's it.
+- **Redeploy the scanner** after changing it: `npx supabase functions deploy scan-card --project-ref nkqbwfcoqmthgsyfvqtc --use-api`
+- **Spend less per card:** add a secret `CARD_SCAN_MODEL` = `claude-sonnet-5-5`.
+- **The website** redeploys itself on every push to `main`.
+- **Free plan pausing:** Supabase pauses free projects after a week without use. The "Keep database awake" workflow pings it every three days.
