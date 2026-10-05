@@ -5,6 +5,7 @@
 //   CARD_SCAN_MODEL    optional, e.g. claude-sonnet-5-5 to spend less per card
 
 import Anthropic from "@anthropic-ai/sdk";
+import { createClient } from "@supabase/supabase-js";
 import { extractCards, type ScanRequest } from "./extract.ts";
 
 const TEAM_EMAIL = (Deno.env.get("TEAM_EMAIL") ?? "team@dealteam6.app").toLowerCase();
@@ -23,21 +24,24 @@ function reply(body: unknown, status = 200) {
   });
 }
 
-// Supabase has already checked the token's signature; make sure it is the team login.
-function emailFromAuth(header: string | null): string {
-  try {
-    const payload = header?.replace(/^Bearer /i, "").split(".")[1] ?? "";
-    const json = atob(payload.replace(/-/g, "+").replace(/_/g, "/"));
-    return String(JSON.parse(json).email ?? "").toLowerCase();
-  } catch {
-    return "";
-  }
+// Ask Supabase Auth who sent this, and only let the team login through.
+// (Checked here rather than at the gateway, which works with every kind of
+// signing key the project might use.)
+const auth = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_ANON_KEY")!, {
+  auth: { persistSession: false },
+});
+
+async function callerEmail(header: string | null): Promise<string> {
+  const token = header?.replace(/^Bearer /i, "").trim();
+  if (!token) return "";
+  const { data, error } = await auth.auth.getUser(token);
+  return error || !data.user ? "" : (data.user.email ?? "").toLowerCase();
 }
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: cors });
   if (req.method !== "POST") return reply({ error: "Use POST." }, 405);
-  if (emailFromAuth(req.headers.get("Authorization")) !== TEAM_EMAIL) {
+  if ((await callerEmail(req.headers.get("Authorization"))) !== TEAM_EMAIL) {
     return reply({ error: "Sign in to Deal Team 6 first." }, 401);
   }
 

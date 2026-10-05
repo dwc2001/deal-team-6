@@ -1,0 +1,10 @@
+# Supabase CLI settings for this project (hosted; there is no local stack).
+project_id = "deal-team-6"
+
+[functions.scan-card]
+# The function checks the caller's login itself (see index.ts).
+verify_jwt = false
+
+[auth]
+# Only the shared team login exists; nobody can create another account.
+enable_signup = false
