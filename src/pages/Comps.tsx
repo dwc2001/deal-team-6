@@ -320,9 +320,9 @@ function RateStrip({
                       cx={cx}
                       cy={cy + dy}
                       r={on ? 7 : 5}
-                      fill={on ? "var(--ink-1)" : "var(--accent)"}
+                      fill={on ? "var(--ink-1)" : "var(--olive)"}
                       fillOpacity={on ? 1 : 0.62}
-                      stroke="var(--sheet)"
+                      stroke="var(--bg)"
                       strokeWidth={1.5}
                       onMouseEnter={() => setHover(c.id)}
                       onMouseLeave={() => setHover("")}

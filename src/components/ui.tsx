@@ -45,11 +45,13 @@ export function Dialog({
   onClose,
   children,
   footer,
+  narrow,
 }: {
   title: string;
   onClose: () => void;
   children: ReactNode;
   footer: ReactNode;
+  narrow?: boolean;
 }) {
   const id = useId();
   useEffect(() => {
@@ -64,7 +66,7 @@ export function Dialog({
   }, [onClose]);
   return createPortal(
     <div className="scrim" onMouseDown={(e) => e.target === e.currentTarget && onClose()}>
-      <div className="dialog" role="dialog" aria-modal="true" aria-labelledby={id}>
+      <div className={narrow ? "dialog narrow" : "dialog"} role="dialog" aria-modal="true" aria-labelledby={id}>
         <div className="dialog-head">
           <h2 id={id}>{title}</h2>
           <button className="icon-btn" onClick={onClose} aria-label="Close">

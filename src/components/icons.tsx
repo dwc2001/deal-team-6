@@ -102,3 +102,12 @@ export const CalcIcon = (p: P) => (
 export const LinkIcon = (p: P) => (
   <Icon {...p}><path d="M10 14a4 4 0 0 0 5.7 0l2.8-2.8a4 4 0 0 0-5.7-5.7l-1 1" /><path d="M14 10a4 4 0 0 0-5.7 0l-2.8 2.8a4 4 0 0 0 5.7 5.7l1-1" /></Icon>
 );
+export const SendIcon = (p: P) => (
+  <Icon {...p}><path d="M20 4 10.5 13.5M20 4l-6 16-3.5-6.5L4 10l16-6Z" /></Icon>
+);
+export const TextIcon = (p: P) => (
+  <Icon {...p}><path d="M5 18.5V7.5A2.5 2.5 0 0 1 7.5 5h9A2.5 2.5 0 0 1 19 7.5v6a2.5 2.5 0 0 1-2.5 2.5H9l-4 2.5Z" /></Icon>
+);
+export const ToolsIcon = (p: P) => (
+  <Icon {...p}><rect x="4" y="4" width="7" height="7" rx="2" /><rect x="13" y="4" width="7" height="7" rx="2" /><rect x="4" y="13" width="7" height="7" rx="2" /><rect x="13" y="13" width="7" height="7" rx="2" /></Icon>
+);

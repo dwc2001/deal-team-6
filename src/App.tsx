@@ -2,23 +2,26 @@ import { useEffect } from "react";
 import { Link, NavLink, Route, Routes, useLocation, useNavigate } from "react-router-dom";
 import { Emblem, Wordmark } from "./components/Emblem";
 import {
-  CalcIcon, CameraIcon, CompsIcon, LinkIcon, MoonIcon, PeopleIcon, PlusIcon, SunIcon,
+  CalcIcon, CameraIcon, ChevronDown, CompsIcon, LinkIcon, MoonIcon, PeopleIcon, PlusIcon, SunIcon, ToolsIcon,
 } from "./components/icons";
 import { Popover, Toasts } from "./components/ui";
 import { ThemeButton } from "./components/ThemeButton";
 import { ContactEditor } from "./pages/ContactEditor";
 import { CompEditor } from "./pages/CompEditor";
 import { LinkEditor } from "./pages/LinkEditor";
-import { Directory } from "./pages/Directory";
+import { People } from "./pages/People";
 import { Comps } from "./pages/Comps";
 import { Calculators } from "./pages/Calculators";
 import { Resources } from "./pages/Resources";
 import { Scan } from "./pages/Scan";
 import { SignIn } from "./pages/SignIn";
+import { Tools } from "./pages/Tools";
 import { initials } from "./lib/format";
 import { resetDemoData } from "./lib/backend";
 import { useStore } from "./lib/store";
 import { useTheme } from "./lib/theme";
+
+const TOOL_PATHS = ["/tools", "/comps", "/calculators", "/resources"];
 
 export function App() {
   const { status, error, reload } = useStore();
@@ -52,7 +55,7 @@ export function App() {
 function Shell() {
   const { mode, editing } = useStore();
   const { pathname } = useLocation();
-  // A new section starts at the top; filters and picks on the same page keep their place.
+  // A new section starts at the top; picks and filters on the same page keep their place.
   useEffect(() => {
     window.scrollTo(0, 0);
   }, [pathname]);
@@ -66,14 +69,15 @@ function Shell() {
       )}
       <main className="page">
         <Routes>
-          <Route path="/" element={<Directory />} />
-          <Route path="/directory/:category" element={<Directory />} />
+          <Route path="/" element={<People />} />
+          <Route path="/directory/:category" element={<People />} />
+          <Route path="/scan" element={<Scan />} />
+          <Route path="/tools" element={<Tools />} />
           <Route path="/comps" element={<Comps />} />
           <Route path="/calculators" element={<Calculators />} />
           <Route path="/calculators/:tool" element={<Calculators />} />
           <Route path="/resources" element={<Resources />} />
-          <Route path="/scan" element={<Scan />} />
-          <Route path="*" element={<Directory />} />
+          <Route path="*" element={<People />} />
         </Routes>
       </main>
       <TabBar />
@@ -86,45 +90,40 @@ function Shell() {
 }
 
 function TopBar() {
-  const { edit } = useStore();
   const navigate = useNavigate();
   const { pathname } = useLocation();
-  const inDirectory = pathname === "/" || pathname.startsWith("/directory");
+  const inPeople = pathname === "/" || pathname.startsWith("/directory");
+  const inTools = TOOL_PATHS.some((p) => pathname.startsWith(p));
   return (
     <header className="topbar">
-      <Link to="/" className="brand" aria-label="Deal Team 6 home">
-        <Emblem size={32} />
+      <Link to="/" className="brand" aria-label="Deal Team 6, People">
+        <Emblem size={30} />
         <Wordmark />
       </Link>
       <nav className="nav" aria-label="Sections">
-        <NavLink to="/" end className={inDirectory ? "active" : ""}>
-          Directory
-        </NavLink>
-        <NavLink to="/comps">Lease Comps</NavLink>
-        <NavLink to="/calculators">Calculators</NavLink>
-        <NavLink to="/resources">Resources</NavLink>
-      </nav>
-      <div className="topbar-right">
-        <ThemeButton />
+        <Link to="/" className={inPeople ? "on" : ""}>People</Link>
         <Popover
+          align="left"
           button={(p) => (
-            <button className="btn btn-ghost" {...p} aria-label="Add">
-              <PlusIcon /> <span className="add-label">Add</span>
+            <button {...p} className={inTools ? "on" : ""}>
+              Tools <ChevronDown size={15} />
             </button>
           )}
         >
           {(close) => (
             <>
-              <button onClick={() => { close(); navigate("/scan"); }}><CameraIcon /> Scan business cards</button>
-              <button onClick={() => { close(); edit({ kind: "contact" }); }}><PeopleIcon /> Add a person</button>
-              <button onClick={() => { close(); edit({ kind: "comp" }); }}><CompsIcon /> Add a lease comp</button>
-              <button onClick={() => { close(); edit({ kind: "link" }); }}><LinkIcon /> Add a link</button>
+              <button onClick={() => { close(); navigate("/comps"); }}><CompsIcon /> Lease comps</button>
+              <button onClick={() => { close(); navigate("/calculators"); }}><CalcIcon /> Calculators</button>
+              <button onClick={() => { close(); navigate("/resources"); }}><LinkIcon /> Links</button>
             </>
           )}
         </Popover>
+      </nav>
+      <div className="topbar-right">
         <Link to="/scan" className="btn btn-primary hide-phone">
-          <CameraIcon /> Scan cards
+          <PlusIcon size={17} /> <span className="add-label">Add someone</span>
         </Link>
+        <ThemeButton />
         <MeMenu />
       </div>
     </header>
@@ -138,8 +137,8 @@ function MeMenu() {
     <Popover
       button={(p) => (
         <button className="me-chip" {...p} aria-label={`Signed in as ${me}`}>
-          <span className="avatar avatar-sm">{initials(me)}</span>
-          <span className="hide-phone">{me.split(" ")[0]}</span>
+          <span className="avatar">{initials(me)}</span>
+          <span className="me-name">{me.split(" ")[0]}</span>
         </button>
       )}
     >
@@ -157,7 +156,7 @@ function MeMenu() {
           </button>
           <hr />
           <p className="menu-note">Appearance</p>
-          <div className="seg" style={{ margin: "0 6px 6px" }} role="group" aria-label="Appearance">
+          <div className="seg" role="group" aria-label="Appearance">
             <button className={theme === "light" ? "on" : ""} onClick={() => pick("light")}><SunIcon size={16} /> Light</button>
             <button className={theme === "dark" ? "on" : ""} onClick={() => pick("dark")}><MoonIcon size={16} /> Dark</button>
             <button className={theme === "system" ? "on" : ""} onClick={() => pick("system")}>Auto</button>
@@ -185,27 +184,20 @@ function MeMenu() {
 
 function TabBar() {
   const { pathname } = useLocation();
-  const inDirectory = pathname === "/" || pathname.startsWith("/directory");
+  const inPeople = pathname === "/" || pathname.startsWith("/directory");
+  const inTools = TOOL_PATHS.some((p) => pathname.startsWith(p));
   return (
     <nav className="tabbar" aria-label="Sections">
-      <NavLink to="/" end className={inDirectory ? "active" : ""}>
+      <NavLink to="/" end className={inPeople ? "active" : ""}>
         <PeopleIcon size={22} />
-        Directory
+        People
       </NavLink>
-      <NavLink to="/comps">
-        <CompsIcon size={22} />
-        Comps
+      <NavLink to="/scan" className="scan-tab" aria-label="Add someone">
+        <span className="scan-dot"><CameraIcon size={26} /></span>
       </NavLink>
-      <NavLink to="/scan" className="scan-tab" aria-label="Scan cards">
-        <span className="scan-dot"><CameraIcon size={24} /></span>
-      </NavLink>
-      <NavLink to="/calculators">
-        <CalcIcon size={22} />
-        Calculators
-      </NavLink>
-      <NavLink to="/resources">
-        <LinkIcon size={22} />
-        Resources
+      <NavLink to="/tools" className={inTools ? "active" : ""}>
+        <ToolsIcon size={22} />
+        Tools
       </NavLink>
     </nav>
   );
