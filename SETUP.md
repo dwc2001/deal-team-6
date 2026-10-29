@@ -37,4 +37,4 @@ If scanning says the key "isn't tied to a workspace", the key was made at the or
 - **Redeploy the scanner** after changing it: `npx supabase functions deploy scan-card --project-ref nkqbwfcoqmthgsyfvqtc --use-api`
 - **Spend less per card:** add a secret `CARD_SCAN_MODEL` = `claude-sonnet-5-5`.
 - **The website** redeploys itself on every push to `main`.
-- **Free plan pausing:** Supabase pauses free projects after a week without use. The "Keep database awake" workflow pings it every three days.
+- **Free plan pausing:** Supabase pauses free projects after a week without use. The "Keep database awake" workflow pings it daily. If it pauses anyway, the site says the database is unreachable: open the project in the Supabase dashboard and click **Restore project** (a few minutes).

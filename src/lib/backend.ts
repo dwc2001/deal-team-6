@@ -2,7 +2,7 @@
 // the shared database; without them it runs in demo mode, keeping everything in
 // this browser so the app can be tried before Supabase is set up.
 
-import { createClient, type SupabaseClient } from "@supabase/supabase-js";
+import { createClient, isAuthRetryableFetchError, type SupabaseClient } from "@supabase/supabase-js";
 import type { ScannedCard, ScanImage } from "../../supabase/functions/scan-card/extract";
 import type { Category, Dataset, Draft, RowOf, Table } from "./types";
 import { SAMPLE_DATA } from "./sample";
@@ -28,6 +28,12 @@ const anonKey = import.meta.env.VITE_SUPABASE_ANON_KEY as string | undefined;
 export const TEAM_EMAIL = ((import.meta.env.VITE_TEAM_EMAIL as string | undefined) || "team@dealteam6.app").toLowerCase();
 
 const now = () => new Date().toISOString();
+
+// Free Supabase projects pause after a quiet week, and a paused project's address
+// stops resolving, so every request fails as a network error.
+const UNREACHABLE =
+  "Can't reach the team database. If your connection is fine, it's probably paused: restore it in the Supabase dashboard.";
+const unreachable = (message: string) => /failed to fetch|load failed|networkerror|fetch failed/i.test(message);
 
 // ------------------------------------------------------------------ Supabase
 function supabaseBackend(client: SupabaseClient): Backend {
@@ -55,6 +61,7 @@ function supabaseBackend(client: SupabaseClient): Backend {
     async signIn(passcode) {
       const { error } = await client.auth.signInWithPassword({ email: TEAM_EMAIL, password: passcode });
       if (error) {
+        if (isAuthRetryableFetchError(error) || unreachable(error.message)) throw new Error(UNREACHABLE);
         throw new Error(/invalid/i.test(error.message) ? "That passcode is not right." : error.message);
       }
     },
@@ -69,7 +76,7 @@ function supabaseBackend(client: SupabaseClient): Backend {
         client.from("links").select("*").order("sort"),
       ]);
       const failed = [categories, contacts, comps, links].find((r) => r.error);
-      if (failed?.error) throw new Error(failed.error.message);
+      if (failed?.error) throw new Error(unreachable(failed.error.message) ? UNREACHABLE : failed.error.message);
       return {
         categories: categories.data ?? [],
         contacts: contacts.data ?? [],
